@@ -84,7 +84,7 @@ For setup instructions and detailed usage, see the [`docs/`](./docs/) directory:
 - **[docs/gh-prs-md-README.md](./docs/gh-prs-md-README.md)** - First-time setup for PR listing tool
 - **[docs/gh-recent-commits-README.md](./docs/gh-recent-commits-README.md)** - First-time setup for recent commits tool
 
-### Complete Guides  
+### Complete Guides
 - **[docs/gh-prs-md.md](./docs/gh-prs-md.md)** - Complete guide for the PR listing tool
 - **[docs/gh-recent-commits.md](./docs/gh-recent-commits.md)** - Complete guide for the recent commits tool
 

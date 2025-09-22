@@ -145,4 +145,33 @@ gh prs-md > team-prs-$(date +%Y%m%d).md
 GH_REPOS="repo1 repo2" gh prs-md
 ```
 
+## Sample Output
+
+When you run `gh prs-md`, you'll see output like this:
+
+```markdown
+### FogPharma/fog4j
+- [PR #3: EN-1801: updating project readme](https://github.com/FogPharma/fog4j/pull/3) — tlincoln-parabilis — feature/EN-1801_fog4j_reademe → v1.4.2 — opened 4d 18h ago — APPROVED — requested: @jspeizer-parabilis (no review yet)
+
+### FogPharma/ML_models_production
+- [PR #540: new models for bcat](https://github.com/FogPharma/ML_models_production/pull/540) — nmathai-fog — new_models_bcat_sep25 → test — opened 2d 16h ago — REVIEW_REQUIRED — requested: @varontron (no review yet),@johnsantamariajr (no review yet)
+- [PR #536: Register model 1ca3626d5f9a1ecc4a5217c3c7438e5f by fkhalif on 20250918](https://github.com/FogPharma/ML_models_production/pull/536) — varontron — model-reg-20250918151653 → validation — opened 3d 19h ago — REVIEW_REQUIRED — no review requested
+
+### FogPharma/ML_model_dockers
+- No open PRs
+
+### FogPharma/IaC-DataScience
+- [PR #14: hotfix: EN-1836 increase batch memory to 64GB for v1.4.2](https://github.com/FogPharma/IaC-DataScience/pull/14) — varontron — hotfix/EN-1836_increase-batch-memory → v1.4.2 — opened 2d 21h ago — REVIEW_REQUIRED — requested: @jspeizer-parabilis (no review yet),@tlincoln-parabilis (no review yet)
+- [PR #12: hotfix: EN-1656 peptide property calcs bugfix for v1.4.2](https://github.com/FogPharma/IaC-DataScience/pull/12) — varontron — hotfix/EN-1656_peptide-property-calcs-v1.4.2 → v1.4.2 — opened 2d 21h ago — REVIEW_REQUIRED — requested: @jspeizer-parabilis (no review yet),@tlincoln-parabilis (no review yet)
+```
+
+**Output Format Explained:**
+- **Repository headers** with `### Organization/Repository`
+- **Clickable PR links** with PR number and title
+- **Author** who created the PR
+- **Branch info** showing `source-branch → target-branch`
+- **Time since opened** in human-readable format
+- **Status** (APPROVED, REVIEW_REQUIRED, CHANGES_REQUESTED, DRAFT)
+- **Requested reviewers** with their review status
+
 For detailed usage information, see [gh-prs-md.md](./gh-prs-md.md).

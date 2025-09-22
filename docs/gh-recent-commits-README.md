@@ -177,10 +177,10 @@ Debug output shows:
    ```bash
    # Check your author filter matches exactly
    echo $COMMIT_AUTHOR
-   
+
    # Test with broader filter to see all commits
    COMMIT_AUTHOR=".*" gh recent-commits
-   
+
    # Find your actual commit author name
    gh api repos/your-org/your-repo/commits --jq '.[0].commit.author.name'
    ```
@@ -204,5 +204,44 @@ gh recent-commits > my-work-$(date +%Y%m%d).md
 # Different author
 COMMIT_AUTHOR="teammate" gh recent-commits
 ```
+
+## Sample Output
+
+When you run `gh recent-commits`, you'll see output like this:
+
+```markdown
+### FogPharma/fog4j
+- **6ed8f11** (2025-09-22) [feature/EN-1801_fog4j_reademe] docs: updated README — dvaron
+
+### FogPharma/ML_models_production
+- **abc1234** (2025-09-21) [main] fix: update model validation logic — Dave Varon
+- **def5678** (2025-09-20) [feature/new-admet-model] feat: add new ADMET model for liver toxicity — varontron
+- **789abcd** (2025-09-19) [hotfix/validation-bug] hotfix: fix validation error in production — dvaron
+
+### FogPharma/IaC-DataScience
+- **123cdef** (2025-09-22) [hotfix/EN-1836_increase-batch-memory] hotfix: increase batch memory to 64GB — dvaron
+- **456789a** (2025-09-21) [feature/peptide-props] feat: add peptide property calculations — Dave Varon
+
+### FogPharma/ML_model_dockers
+- No commits in the last 7 days
+
+### FogPharma/fogpy
+- **987fed1** (2025-09-20) [ci/EN-1778_sop_compliance] ci: update workflows for SOP compliance — varontron
+```
+
+**Output Format Explained:**
+- **Repository headers** with `### Organization/Repository`
+- **Short commit SHA** (first 7 characters, clickable in some terminals)
+- **Date** in YYYY-MM-DD format
+- **Branch name** in square brackets
+- **Commit message** (first line only)
+- **Author name** as it appears in the commit
+- **"No commits" message** for repositories with no matching commits
+
+**What gets filtered:**
+- Only shows commits from the last 7 days
+- Only shows commits by authors matching your `COMMIT_AUTHOR` filter
+- Searches ALL branches, not just main/master
+- Each commit may appear multiple times if it exists on multiple branches
 
 For detailed usage information and advanced features, see [gh-recent-commits.md](./gh-recent-commits.md).
