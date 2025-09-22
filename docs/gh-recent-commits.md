@@ -178,7 +178,7 @@ gh recent-commits > my-recent-work-$(date +%Y%m%d).md
    # Check your author filter
    echo $COMMIT_AUTHOR
    # Make sure it matches your commit author name exactly
-   
+
    # Test with a broader filter temporarily
    COMMIT_AUTHOR=".*" gh recent-commits
    ```

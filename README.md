@@ -78,11 +78,18 @@ For authentication, the scripts use GitHub tokens in this order of preference:
 
 ## Documentation
 
-For detailed setup instructions, usage examples, and troubleshooting, see the [`docs/`](./docs/) directory:
+For setup instructions and detailed usage, see the [`docs/`](./docs/) directory:
 
-- **[docs/README.md](./docs/README.md)** - First-time setup guide and overview
+### Quick Start Guides
+- **[docs/gh-prs-md-README.md](./docs/gh-prs-md-README.md)** - First-time setup for PR listing tool
+- **[docs/gh-recent-commits-README.md](./docs/gh-recent-commits-README.md)** - First-time setup for recent commits tool
+
+### Complete Guides  
 - **[docs/gh-prs-md.md](./docs/gh-prs-md.md)** - Complete guide for the PR listing tool
 - **[docs/gh-recent-commits.md](./docs/gh-recent-commits.md)** - Complete guide for the recent commits tool
+
+### Overview
+- **[docs/README.md](./docs/README.md)** - Documentation overview and navigation
 
 ## License
 

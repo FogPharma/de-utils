@@ -1,0 +1,208 @@
+# gh recent-commits - Setup Guide
+
+A GitHub CLI alias that displays recent commits from the last 7 days across multiple repositories, filtered by author.
+
+## First-Time Setup
+
+### Prerequisites
+
+Install required tools:
+```bash
+# GitHub CLI
+# macOS:
+brew install gh
+# Ubuntu/Debian:
+sudo apt install gh
+# Or download from: https://cli.github.com/
+
+# jq (JSON processor)
+# macOS:
+brew install jq
+# Ubuntu/Debian:
+sudo apt install jq
+# CentOS/RHEL:
+sudo yum install jq
+```
+
+### Step-by-Step Installation
+
+#### 1. Authenticate with GitHub
+
+```bash
+gh auth login
+```
+
+#### 2. Install the Script
+
+```bash
+# Create local bin directory if it doesn't exist
+mkdir -p ~/.local/bin
+
+# Copy the script to your local bin
+cp src/gh-recent-commits ~/.local/bin/
+
+# Make it executable
+chmod +x ~/.local/bin/gh-recent-commits
+
+# Add to PATH if not already there
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc
+source ~/.bashrc  # or source ~/.zshrc
+```
+
+#### 3. Configure GitHub CLI Alias
+
+```bash
+# Add the alias
+gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
+```
+
+#### 4. Configure Environment Variables
+
+Add to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
+
+```bash
+# Required: List of repositories to query
+export GH_REPOS="your-org/repo1 your-org/repo2 repo3"
+
+# Required: Your author name(s) - THIS IS CRITICAL
+export COMMIT_AUTHOR="your-github-username"
+
+# Examples:
+export GH_REPOS="fog4j ML_models_production IaC-DataScience"
+export COMMIT_AUTHOR="john_doe"
+
+# If you use multiple names in commits:
+export COMMIT_AUTHOR="john_doe|John Doe|john@company.com"
+```
+
+#### 5. Find Your Commit Author Name
+
+**Important:** The author filter must match exactly how your name appears in commits.
+
+```bash
+# Check your recent commits in a specific repo
+gh api repos/your-org/your-repo/commits --jq '.[0].commit.author.name'
+
+# Or check locally
+git log --oneline -n 5 --pretty=format:"%an"
+
+# Set the filter based on what you find
+export COMMIT_AUTHOR="YourActualCommitName"
+```
+
+#### 6. Test the Setup
+
+```bash
+# Reload your shell configuration
+source ~/.bashrc  # or source ~/.zshrc
+
+# Test the alias
+gh recent-commits
+
+# If no results, try debug mode
+DEBUG=1 gh recent-commits
+```
+
+## Configuration Examples
+
+### Single Author
+```bash
+export COMMIT_AUTHOR="alice"
+```
+
+### Multiple Author Names
+If you commit under different names:
+```bash
+export COMMIT_AUTHOR="alice|Alice Smith|alice@company.com"
+```
+
+### Single Organization
+```bash
+export GH_REPOS="repo1 repo2 repo3"
+# Interpreted as: your-org/repo1, your-org/repo2, etc.
+```
+
+### Multiple Organizations
+```bash
+export GH_REPOS="org1/repo1 org2/repo2 personal/repo3"
+```
+
+### One-time Overrides
+```bash
+# Different author for this run
+COMMIT_AUTHOR="bob" gh recent-commits
+
+# Different repositories
+GH_REPOS="other-org/repo1 other-org/repo2" gh recent-commits
+
+# Show all authors (not recommended for large repos)
+COMMIT_AUTHOR=".*" gh recent-commits
+```
+
+## Quick Diagnostics
+
+### Check Installation
+```bash
+# Check if tools are installed
+which gh jq
+
+# Check authentication
+gh auth status
+
+# Check environment variables
+echo "GH_REPOS: $GH_REPOS"
+echo "COMMIT_AUTHOR: $COMMIT_AUTHOR"
+```
+
+### Debug Mode
+Enable detailed output to troubleshoot:
+```bash
+DEBUG=1 gh recent-commits
+```
+
+Debug output shows:
+- Date range being searched
+- Author filter being applied
+- Each branch being processed
+- Commits being skipped and why
+
+### Common Issues
+
+1. **"set GH_REPOS" error**
+   ```bash
+   export GH_REPOS="your-repo1 your-repo2"
+   ```
+
+2. **"No commits in the last 7 days" (when you know you have commits)**
+   ```bash
+   # Check your author filter matches exactly
+   echo $COMMIT_AUTHOR
+   
+   # Test with broader filter to see all commits
+   COMMIT_AUTHOR=".*" gh recent-commits
+   
+   # Find your actual commit author name
+   gh api repos/your-org/your-repo/commits --jq '.[0].commit.author.name'
+   ```
+
+3. **"command not found: gh"** - Install GitHub CLI
+4. **"command not found: jq"** - Install jq JSON processor
+5. **Authentication errors** - Run `gh auth login`
+
+## Usage
+
+```bash
+# Basic usage
+gh recent-commits
+
+# Debug mode
+DEBUG=1 gh recent-commits
+
+# Save to file
+gh recent-commits > my-work-$(date +%Y%m%d).md
+
+# Different author
+COMMIT_AUTHOR="teammate" gh recent-commits
+```
+
+For detailed usage information and advanced features, see [gh-recent-commits.md](./gh-recent-commits.md).
