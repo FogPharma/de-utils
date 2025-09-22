@@ -1,6 +1,6 @@
 # DE-Utils
 
-Developer Experience utilities for GitHub workflow productivity.
+Data Engineering utilities for workflow productivity.
 
 ## Overview
 
