@@ -117,21 +117,6 @@ echo "GH_REPOS: $GH_REPOS"
 gh repo view your-org/your-repo
 ```
 
-### Common Issues
-
-1. **"set GH_REPOS" error**
-   ```bash
-   # Make sure GH_REPOS is set
-   echo $GH_REPOS
-   # If empty, set it:
-   export GH_REPOS="your-repo1 your-repo2"
-   ```
-
-2. **"command not found: gh"** - Install GitHub CLI
-3. **"command not found: jq"** - Install jq JSON processor
-4. **Authentication errors** - Run `gh auth login`
-5. **Repository not found** - Check repository names and access permissions
-
 ## Usage
 
 ```bash
@@ -147,9 +132,10 @@ GH_REPOS="repo1 repo2" gh prs-md
 
 ## Sample Output
 
-When you run `gh prs-md`, you'll see output like this:
+When you run `gh prs-md`, you'll see output like this (when viewed as rendered markdown):
 
-```markdown
+---
+
 ### FogPharma/fog4j
 - [PR #3: EN-1801: updating project readme](https://github.com/FogPharma/fog4j/pull/3) — tlincoln-parabilis — feature/EN-1801_fog4j_reademe → v1.4.2 — opened 4d 18h ago — APPROVED — requested: @jspeizer-parabilis (no review yet)
 
@@ -163,7 +149,8 @@ When you run `gh prs-md`, you'll see output like this:
 ### FogPharma/IaC-DataScience
 - [PR #14: hotfix: EN-1836 increase batch memory to 64GB for v1.4.2](https://github.com/FogPharma/IaC-DataScience/pull/14) — varontron — hotfix/EN-1836_increase-batch-memory → v1.4.2 — opened 2d 21h ago — REVIEW_REQUIRED — requested: @jspeizer-parabilis (no review yet),@tlincoln-parabilis (no review yet)
 - [PR #12: hotfix: EN-1656 peptide property calcs bugfix for v1.4.2](https://github.com/FogPharma/IaC-DataScience/pull/12) — varontron — hotfix/EN-1656_peptide-property-calcs-v1.4.2 → v1.4.2 — opened 2d 21h ago — REVIEW_REQUIRED — requested: @jspeizer-parabilis (no review yet),@tlincoln-parabilis (no review yet)
-```
+
+---
 
 **Output Format Explained:**
 - **Repository headers** with `### Organization/Repository`
@@ -174,4 +161,18 @@ When you run `gh prs-md`, you'll see output like this:
 - **Status** (APPROVED, REVIEW_REQUIRED, CHANGES_REQUESTED, DRAFT)
 - **Requested reviewers** with their review status
 
-For detailed usage information, see [gh-prs-md.md](./gh-prs-md.md).
+
+## Common Issues
+
+1. **"set GH_REPOS" error**
+   ```bash
+   # Make sure GH_REPOS is set
+   echo $GH_REPOS
+   # If empty, set it:
+   export GH_REPOS="your-repo1 your-repo2"
+   ```
+
+2. **"command not found: gh"** - Install GitHub CLI
+3. **"command not found: jq"** - Install jq JSON processor
+4. **Authentication errors** - Run `gh auth login`
+5. **Repository not found** - Check repository names and access permissions

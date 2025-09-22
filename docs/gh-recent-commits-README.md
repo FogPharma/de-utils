@@ -154,7 +154,64 @@ echo "GH_REPOS: $GH_REPOS"
 echo "COMMIT_AUTHOR: $COMMIT_AUTHOR"
 ```
 
-### Debug Mode
+## Usage
+
+```bash
+# Basic usage
+gh recent-commits
+
+# Debug mode
+DEBUG=1 gh recent-commits
+
+# Save to file
+gh recent-commits > my-work-$(date +%Y%m%d).md
+
+# Different author
+COMMIT_AUTHOR="teammate" gh recent-commits
+```
+
+## Sample Output
+
+When you run `gh recent-commits`, you'll see output like this (when viewed as rendered markdown):
+
+---
+
+### FogPharma/fog4j
+- **6ed8f11** (2025-09-22) [feature/EN-1801_fog4j_reademe] docs: updated README — dvaron
+
+### FogPharma/ML_models_production
+- **abc1234** (2025-09-21) [main] fix: update model validation logic — Dave Varon
+- **def5678** (2025-09-20) [feature/new-admet-model] feat: add new ADMET model for liver toxicity — varontron
+- **789abcd** (2025-09-19) [hotfix/validation-bug] hotfix: fix validation error in production — dvaron
+
+### FogPharma/IaC-DataScience
+- **123cdef** (2025-09-22) [hotfix/EN-1836_increase-batch-memory] hotfix: increase batch memory to 64GB — dvaron
+- **456789a** (2025-09-21) [feature/peptide-props] feat: add peptide property calculations — Dave Varon
+
+### FogPharma/ML_model_dockers
+- No commits in the last 7 days
+
+### FogPharma/fogpy
+- **987fed1** (2025-09-20) [ci/EN-1778_sop_compliance] ci: update workflows for SOP compliance — varontron
+
+---
+
+**Output Format Explained:**
+- **Repository headers** with `### Organization/Repository`
+- **Short commit SHA** (first 7 characters, clickable in some terminals)
+- **Date** in YYYY-MM-DD format
+- **Branch name** in square brackets
+- **Commit message** (first line only)
+- **Author name** as it appears in the commit
+- **"No commits" message** for repositories with no matching commits
+
+**What gets filtered:**
+- Only shows commits from the last 7 days
+- Only shows commits by authors matching your `COMMIT_AUTHOR` filter
+- Searches ALL branches, not just main/master
+- Each commit may appear multiple times if it exists on multiple branches
+
+## Debug Mode
 Enable detailed output to troubleshoot:
 ```bash
 DEBUG=1 gh recent-commits
@@ -166,7 +223,7 @@ Debug output shows:
 - Each branch being processed
 - Commits being skipped and why
 
-### Common Issues
+## Common Issues
 
 1. **"set GH_REPOS" error**
    ```bash
@@ -188,60 +245,3 @@ Debug output shows:
 3. **"command not found: gh"** - Install GitHub CLI
 4. **"command not found: jq"** - Install jq JSON processor
 5. **Authentication errors** - Run `gh auth login`
-
-## Usage
-
-```bash
-# Basic usage
-gh recent-commits
-
-# Debug mode
-DEBUG=1 gh recent-commits
-
-# Save to file
-gh recent-commits > my-work-$(date +%Y%m%d).md
-
-# Different author
-COMMIT_AUTHOR="teammate" gh recent-commits
-```
-
-## Sample Output
-
-When you run `gh recent-commits`, you'll see output like this:
-
-```markdown
-### FogPharma/fog4j
-- **6ed8f11** (2025-09-22) [feature/EN-1801_fog4j_reademe] docs: updated README — dvaron
-
-### FogPharma/ML_models_production
-- **abc1234** (2025-09-21) [main] fix: update model validation logic — Dave Varon
-- **def5678** (2025-09-20) [feature/new-admet-model] feat: add new ADMET model for liver toxicity — varontron
-- **789abcd** (2025-09-19) [hotfix/validation-bug] hotfix: fix validation error in production — dvaron
-
-### FogPharma/IaC-DataScience
-- **123cdef** (2025-09-22) [hotfix/EN-1836_increase-batch-memory] hotfix: increase batch memory to 64GB — dvaron
-- **456789a** (2025-09-21) [feature/peptide-props] feat: add peptide property calculations — Dave Varon
-
-### FogPharma/ML_model_dockers
-- No commits in the last 7 days
-
-### FogPharma/fogpy
-- **987fed1** (2025-09-20) [ci/EN-1778_sop_compliance] ci: update workflows for SOP compliance — varontron
-```
-
-**Output Format Explained:**
-- **Repository headers** with `### Organization/Repository`
-- **Short commit SHA** (first 7 characters, clickable in some terminals)
-- **Date** in YYYY-MM-DD format
-- **Branch name** in square brackets
-- **Commit message** (first line only)
-- **Author name** as it appears in the commit
-- **"No commits" message** for repositories with no matching commits
-
-**What gets filtered:**
-- Only shows commits from the last 7 days
-- Only shows commits by authors matching your `COMMIT_AUTHOR` filter
-- Searches ALL branches, not just main/master
-- Each commit may appear multiple times if it exists on multiple branches
-
-For detailed usage information and advanced features, see [gh-recent-commits.md](./gh-recent-commits.md).
