@@ -1,96 +1,58 @@
 # DE-Utils
 
-Developer Experience utilities and scripts for improving productivity.
+Developer Experience utilities for GitHub workflow productivity.
 
-## Contents
+## Overview
 
-### GitHub CLI Extensions
+Two GitHub CLI aliases that help you quickly review activity across multiple repositories:
 
-Located in `src/`:
+- **`gh prs-md`** - Display open pull requests in markdown format with status, reviewers, and timing
+- **`gh recent-commits`** - Show your recent commits from the last 7 days across all branches
 
-- **`gh-prs-md`** - Display open pull requests across multiple repositories in markdown format
-- **`gh-recent-commits`** - Show recent commits from the last 7 days, filtered by author and grouped by repository
+Both tools output clean markdown with clickable links and can save results to files for easy sharing.
 
-## GitHub CLI Scripts
+## Quick Start
 
-### gh-prs-md
+1. **Install prerequisites:** GitHub CLI (`gh`) and `jq`
+2. **Copy scripts** from `src/` to `~/.local/bin/`
+3. **Add GitHub CLI aliases** (see setup guides below)
+4. **Configure repositories:** `export GH_REPOS="repo1 repo2 repo3"`
+5. **Run the tools:** `gh prs-md` or `gh recent-commits`
 
-Displays open pull requests across multiple repositories with:
-- PR status (APPROVED, REVIEW_REQUIRED, CHANGES_REQUESTED, DRAFT)
-- Author and reviewers
-- Time since opened
-- Branch information
+## Sample Output
 
-**Usage:**
-```bash
-export GH_REPOS="repo1 repo2 repo3"
-gh prs-md
+### Pull Requests (`gh prs-md`)
 ```
-
-### gh-recent-commits
-
-Shows recent commits from the last 7 days with:
-- Multi-repository support
-- Branch-aware searching
-- Author filtering
-- Clean markdown output with clickable links
-
-**Usage:**
-```bash
-export GH_REPOS="repo1 repo2 repo3"
-export COMMIT_AUTHOR="your_username"  # optional
-gh recent-commits
+### FogPharma/my-repo
+- [PR #42: Add new feature](https://github.com/FogPharma/my-repo/pull/42) — alice — feature/new-thing → main — opened 2d ago — REVIEW_REQUIRED — requested: @bob
 ```
+or as rendered:
+### FogPharma/my-repo
+- [PR #42: Add new feature](https://github.com/FogPharma/my-repo/pull/42) — alice — feature/new-thing → main — opened 2d ago — REVIEW_REQUIRED — requested: @bob
 
-## Installation
-
-1. Copy scripts to your local bin directory:
-   ```bash
-   cp src/gh-prs-md ~/.local/bin/
-   cp src/gh-recent-commits ~/.local/bin/
-   chmod +x ~/.local/bin/gh-prs-md ~/.local/bin/gh-recent-commits
-   ```
-
-2. Add GitHub CLI aliases to `~/.config/gh/config.yml`:
-   ```yaml
-   aliases:
-     prs-md: '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
-     recent-commits: '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
-   ```
-
-## Requirements
-
-- GitHub CLI (`gh`)
-- `jq` for JSON processing
-- Standard Unix tools (`date`, `sed`, `cut`, `paste`)
-
-## Configuration
-
-Both scripts use the `GH_REPOS` environment variable to specify which repositories to query:
-
-```bash
-export GH_REPOS="org/repo1 org/repo2 repo3"  # repo3 assumes default org
+### Recent Commits (`gh recent-commits`)
 ```
-
-For authentication, the scripts use GitHub tokens in this order of preference:
-1. `GH_GEI_TOKEN` (if set)
-2. `GITHUB_TOKEN` (fallback)
+### FogPharma/my-repo
+- **abc1234** (2025-09-22) [feature/new-thing] feat: add awesome feature — alice
+```
+or as rendered:
+### FogPharma/my-repo
+- **abc1234** (2025-09-22) [feature/new-thing] feat: add awesome feature — alice
 
 ## Documentation
 
-For setup instructions and detailed usage, see the [`docs/`](./docs/) directory:
+### 🚀 First-Time Setup
+- **[gh-prs-md Setup Guide](./docs/gh-prs-md-README.md)** - Install and configure the PR listing tool
+- **[gh-recent-commits Setup Guide](./docs/gh-recent-commits-README.md)** - Install and configure the recent commits tool
 
-### Quick Start Guides
-- **[docs/gh-prs-md-README.md](./docs/gh-prs-md-README.md)** - First-time setup for PR listing tool
-- **[docs/gh-recent-commits-README.md](./docs/gh-recent-commits-README.md)** - First-time setup for recent commits tool
+### 📖 Complete Guides
+- **[gh-prs-md Complete Guide](./docs/gh-prs-md.md)** - Advanced features, customization, and troubleshooting
+- **[gh-recent-commits Complete Guide](./docs/gh-recent-commits.md)** - Advanced filtering, performance tips, and integrations
 
-### Complete Guides
-- **[docs/gh-prs-md.md](./docs/gh-prs-md.md)** - Complete guide for the PR listing tool
-- **[docs/gh-recent-commits.md](./docs/gh-recent-commits.md)** - Complete guide for the recent commits tool
+## Requirements
 
-### Overview
-- **[docs/README.md](./docs/README.md)** - Documentation overview and navigation
+- **GitHub CLI** (`gh`) - installed and authenticated
+- **jq** - JSON processor
+- **Standard Unix tools** - `date`, `sed`, `cut` (usually pre-installed)
 
-## License
 
-MIT License - see individual script files for details.
