@@ -52,8 +52,20 @@ source ~/.bashrc  # or source ~/.zshrc
 #### 3. Configure GitHub CLI Alias
 
 ```bash
-# Add the alias
+# Basic alias (output to terminal only)
 gh alias set prs-md '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
+
+# Or alias with file output (recommended)
+gh alias set prs-md '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md | tee ~/Documents/team-prs.md'
+```
+
+**Alternative: Create a bash/zsh alias for more control:**
+```bash
+# Add to your ~/.bashrc or ~/.zshrc
+alias team-prs='gh prs-md | tee ~/Documents/team-prs-$(date +%Y%m%d).md'
+
+# Usage after reloading shell:
+team-prs  # Shows output and saves to dated file
 ```
 
 #### 4. Configure Environment Variables
@@ -123,11 +135,14 @@ gh repo view your-org/your-repo
 # Basic usage
 gh prs-md
 
-# Save to file
+# Save to file (if not using tee in alias)
 gh prs-md > team-prs-$(date +%Y%m%d).md
 
 # Query specific repositories
 GH_REPOS="repo1 repo2" gh prs-md
+
+# Using the bash/zsh alias (if configured)
+team-prs  # Shows output and saves to dated file
 ```
 
 ## Sample Output
@@ -176,3 +191,7 @@ When you run `gh prs-md`, you'll see output like this (when viewed as rendered m
 3. **"command not found: jq"** - Install jq JSON processor
 4. **Authentication errors** - Run `gh auth login`
 5. **Repository not found** - Check repository names and access permissions
+
+---
+
+For detailed usage information and advanced features, see [gh-prs-md.md](./gh-prs-md.md).

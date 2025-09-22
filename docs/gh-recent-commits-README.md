@@ -52,8 +52,22 @@ source ~/.bashrc  # or source ~/.zshrc
 #### 3. Configure GitHub CLI Alias
 
 ```bash
-# Add the alias
+# Basic alias (output to terminal only)
 gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
+
+# Or alias with file output (recommended)
+gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits | tee ~/Documents/my-recent-work.md'
+```
+
+**Alternative: Create a bash/zsh alias for more control:**
+```bash
+# Add to your ~/.bashrc or ~/.zshrc
+alias my-work='gh recent-commits | tee ~/Documents/my-work-$(date +%Y%m%d).md'
+alias weekly-summary='gh recent-commits | tee ~/Documents/weekly-summary-$(date +%Y-W%U).md'
+
+# Usage after reloading shell:
+my-work        # Shows output and saves to dated file
+weekly-summary # Shows output and saves to weekly file
 ```
 
 #### 4. Configure Environment Variables
@@ -163,11 +177,15 @@ gh recent-commits
 # Debug mode
 DEBUG=1 gh recent-commits
 
-# Save to file
+# Save to file (if not using tee in alias)
 gh recent-commits > my-work-$(date +%Y%m%d).md
 
 # Different author
 COMMIT_AUTHOR="teammate" gh recent-commits
+
+# Using bash/zsh aliases (if configured)
+my-work        # Shows output and saves to dated file
+weekly-summary # Shows output and saves to weekly file
 ```
 
 ## Sample Output
@@ -245,3 +263,6 @@ Debug output shows:
 3. **"command not found: gh"** - Install GitHub CLI
 4. **"command not found: jq"** - Install jq JSON processor
 5. **Authentication errors** - Run `gh auth login`
+
+---
+For detailed usage information and advanced features, see [gh-recent-commits.md](./gh-recent-commits.md).
