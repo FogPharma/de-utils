@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Debug flag - set to 1 to enable debug output
+DEBUG=${DEBUG:-0}
+
+# Author filter - set COMMIT_AUTHOR to filter by specific author(s)
+# Default to dvaron's various usernames, others can override with: COMMIT_AUTHOR="their_name" gh recent-commits
+COMMIT_AUTHOR=${COMMIT_AUTHOR:-"dvaron|Dave Varon|varontron"}
+
+# Get repositories from GH_REPOS environment variable
+REPOS="${GH_REPOS:?set GH_REPOS}"
+PREF_ENV="GITHUB_TOKEN=${GH_GEI_TOKEN:-${GITHUB_TOKEN:-}} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
+
+# Get date 7 days ago
+SINCE_DATE=$(date -v-7d '+%Y-%m-%d' 2>/dev/null || date -d '7 days ago' '+%Y-%m-%d' 2>/dev/null)
+
+[[ $DEBUG -eq 1 ]] && echo "DEBUG: SINCE_DATE=$SINCE_DATE"
+[[ $DEBUG -eq 1 ]] && echo "DEBUG: COMMIT_AUTHOR=$COMMIT_AUTHOR"
+
+for r in $REPOS; do
+  if [[ "$r" == */* ]]; then repo="$r"; else repo="FogPharma/$r"; fi
+
+  printf "### %s\n" "$repo"
+
+  # Get all branches for the repository
+  BRANCHES=$(eval "$PREF_ENV gh api repos/\"$repo\"/branches --paginate --jq '.[].name'" 2>/dev/null || echo "")
+
+  [[ $DEBUG -eq 1 ]] && echo "DEBUG: Found branches for $repo: $BRANCHES"
+
+  if [[ -z "${BRANCHES:-}" ]]; then
+    echo "- Unable to fetch branches"
+    echo
+    continue
+  fi
+
+  # Process each branch and output commits directly - no JSON concatenation
+  # Capture output to detect if we found any commits
+  commit_output=""
+
+  while IFS= read -r branch; do
+    [[ -z "${branch:-}" ]] && continue
+
+    [[ $DEBUG -eq 1 ]] && echo "DEBUG: Processing branch: $branch"
+
+    # Get commits directly and process them immediately
+    branch_output=$(eval "$PREF_ENV gh api \"repos/\"$repo\"/commits?sha=$branch&since=${SINCE_DATE}T00:00:00Z&per_page=100\" --paginate --jq '.[] | {sha: (.sha[0:7]), message: ((.commit.message | split(\"\n\")[0]) // \"\"), author: (.commit.author.name // \"\"), date: .commit.author.date, branch: \"'$branch'\"}'" 2>/dev/null | while IFS= read -r commit_json; do
+      [[ -z "${commit_json:-}" ]] && continue
+
+      # Skip error responses
+      if [[ "$commit_json" =~ "Not Found" || "$commit_json" =~ "message.*documentation_url" ]]; then
+        continue
+      fi
+
+      sha=$(echo "$commit_json" | jq -r '.sha // ""' 2>/dev/null)
+      message=$(echo "$commit_json" | jq -r '.message // ""' 2>/dev/null)
+      author=$(echo "$commit_json" | jq -r '.author // ""' 2>/dev/null)
+      date=$(echo "$commit_json" | jq -r '.date // ""' 2>/dev/null)
+      branch_name=$(echo "$commit_json" | jq -r '.branch // ""' 2>/dev/null)
+
+      [[ -z "$sha" || "$sha" == "null" || -z "$message" || -z "$author" || -z "$date" ]] && continue
+
+      # Filter by author - skip if author doesn't match the filter
+      if [[ ! "$author" =~ ^($COMMIT_AUTHOR)$ ]]; then
+        [[ $DEBUG -eq 1 ]] && echo "DEBUG: Skipping commit by $author (doesn't match filter: $COMMIT_AUTHOR)"
+        continue
+      fi
+
+      # Format date
+      formatted_date=$(echo "$date" | sed 's/T/ /' | sed 's/Z$//' | cut -d' ' -f1)
+
+      echo "- **$sha** ($formatted_date) [$branch_name] $message — $author"
+    done)
+
+    # Add branch output to total output
+    if [[ -n "$branch_output" ]]; then
+      commit_output="$commit_output$branch_output"$'\n'
+    fi
+
+  done <<< "$BRANCHES"
+
+  # Display results or "no commits" message
+  if [[ -n "$commit_output" ]]; then
+    echo "$commit_output"
+  else
+    echo "- No commits in the last 7 days"
+  fi
+
+  echo
+done

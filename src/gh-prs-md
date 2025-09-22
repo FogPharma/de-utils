@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+REPOS="${GH_REPOS:?set GH_REPOS}"
+PREF_ENV="GITHUB_TOKEN=${GH_GEI_TOKEN:-${GITHUB_TOKEN:-}} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
+for r in $REPOS; do
+  if [[ "$r" == */* ]]; then repo="$r"; else repo="FogPharma/$r"; fi
+  printf "### %s\n" "$repo"
+  PRS=$(eval "$PREF_ENV gh pr list --repo \"$repo\" --state open --json number --jq '.[].number'" 2>/dev/null || true)
+  if [[ -z "${PRS:-}" ]]; then
+    echo "- No open PRs"
+    echo
+    continue
+  fi
+  while read -r n; do
+    [[ -z "${n:-}" ]] && continue
+    PJ=$(eval "$PREF_ENV gh pr view \"$n\" --repo \"$repo\" --json number,title,url,headRefName,baseRefName,createdAt,author,isDraft,reviewDecision" 2>/dev/null || true)
+    [[ -z "${PJ:-}" ]] && continue
+    title=$(printf "%s" "$PJ" | jq -r '.title')
+    url=$(printf "%s" "$PJ" | jq -r '.url')
+    head=$(printf "%s" "$PJ" | jq -r '.headRefName')
+    base=$(printf "%s" "$PJ" | jq -r '.baseRefName')
+    created=$(printf "%s" "$PJ" | jq -r '.createdAt')
+    author=$(printf "%s" "$PJ" | jq -r '.author.login // ""')
+    is_draft=$(printf "%s" "$PJ" | jq -r '.isDraft')
+    decision=$(printf "%s" "$PJ" | jq -r '.reviewDecision // ""')
+    created_ago=$(jq -nr --arg c "$created" '
+      def human:
+        def d: (./86400 | floor);
+        def h: ((. % 86400) / 3600 | floor);
+        def m: ((. % 3600) / 60 | floor);
+        if d > 0 then ( (d|tostring)+"d " + ((h|tostring)+"h") )
+        elif h > 0 then ( (h|tostring)+"h " + ((m|tostring)+"m") )
+        else ( (m|tostring)+"m" ) end;
+      (now - ($c|fromdateiso8601)) | human')
+    if [[ "$is_draft" == "true" ]]; then
+      status="DRAFT"
+    else
+      if [[ -n "$decision" ]]; then status="$decision"; else status="REVIEW_REQUIRED"; fi
+    fi
+    RR_USERS=$(eval "$PREF_ENV gh api repos/\"$repo\"/pulls/\"$n\"/requested_reviewers --jq '.users[].login'" 2>/dev/null || true)
+    RR_TEAMS=$(eval "$PREF_ENV gh api repos/\"$repo\"/pulls/\"$n\"/requested_reviewers --jq '.teams[].slug'" 2>/dev/null || true)
+    RV=$(eval "$PREF_ENV gh api repos/\"$repo\"/pulls/\"$n\"/reviews" 2>/dev/null || echo '[]')
+    requested_parts=()
+    if [[ -n "${RR_USERS:-}" ]]; then
+      while read -r u; do
+        [[ -z "${u:-}" ]] && continue
+        info=$(printf "%s" "$RV" | jq -r --arg u "$u" '
+          def human:
+            def d: (./86400 | floor);
+            def h: ((. % 86400) / 3600 | floor);
+            def m: ((. % 3600) / 60 | floor);
+            if d > 0 then ( (d|tostring)+"d " + ((h|tostring)+"h") )
+            elif h > 0 then ( (h|tostring)+"h " + ((m|tostring)+"m") )
+            else ( (m|tostring)+"m" ) end;
+          [ .[] | select(.user.login==$u) ]
+          | if length==0 then "no"
+            else (max_by(.submitted_at) | ( .state + " " + ((now - (.submitted_at|fromdateiso8601)) | human) + " ago" ))
+            end')
+        if [[ "$info" == "no" ]]; then
+          requested_parts+=("@${u} (no review yet)")
+        else
+          requested_parts+=("@${u} (${info})")
+        fi
+      done <<< "$RR_USERS"
+    fi
+    if [[ -n "${RR_TEAMS:-}" ]]; then
+      while read -r t; do
+        [[ -z "${t:-}" ]] && continue
+        requested_parts+=("@${t}")
+      done <<< "$RR_TEAMS"
+    fi
+    if [[ ${#requested_parts[@]} -gt 0 ]]; then
+      requested_str=$(printf '%s\n' "${requested_parts[@]}" | paste -sd ', ' -)
+      echo "- [PR #$n: $title]($url) — $author — $head → $base — opened $created_ago ago — $status — requested: $requested_str"
+    else
+      echo "- [PR #$n: $title]($url) — $author — $head → $base — opened $created_ago ago — $status — no review requested"
+    fi
+  done <<< "$PRS"
+  echo
+done
