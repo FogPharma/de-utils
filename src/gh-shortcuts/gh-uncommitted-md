@@ -1,0 +1,328 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Debug flag - set to 1 to enable debug output
+DEBUG=${DEBUG:-0}
+
+# Base directory for repositories - defaults to ~/Documents/work
+REPO_BASE_DIR=${REPO_BASE_DIR:-"$HOME/Documents/work"}
+
+# Output file in PAPI/docs
+PAPI_DOCS_DIR="$REPO_BASE_DIR/PAPI/docs"
+OUTPUT_FILE="$PAPI_DOCS_DIR/uncommitted_changes.md"
+
+# Get repositories from GH_REPOS environment variable
+REPOS="${GH_REPOS:?set GH_REPOS}"
+
+[[ $DEBUG -eq 1 ]] && echo "DEBUG: REPO_BASE_DIR=$REPO_BASE_DIR" >&2
+[[ $DEBUG -eq 1 ]] && echo "DEBUG: OUTPUT_FILE=$OUTPUT_FILE" >&2
+
+# Ensure PAPI/docs directory exists
+mkdir -p "$PAPI_DOCS_DIR"
+
+{
+for r in $REPOS; do
+  # Extract repo name (handle both "org/repo" and "repo" formats)
+  if [[ "$r" == */* ]]; then
+    repo_name=$(basename "$r")
+  else
+    repo_name="$r"
+  fi
+
+  # Try to find the repo directory
+  repo_dir="$REPO_BASE_DIR/$repo_name"
+
+  [[ $DEBUG -eq 1 ]] && echo "DEBUG: Checking repo: $repo_name at $repo_dir" >&2
+
+  # Check if directory exists and is a git repo
+  if [[ ! -d "$repo_dir" ]]; then
+    printf "### %s\n" "$r"
+    echo "- Repository directory not found: $repo_dir"
+    echo
+    continue
+  fi
+
+  if [[ ! -d "$repo_dir/.git" ]]; then
+    printf "### %s\n" "$r"
+    echo "- Not a git repository: $repo_dir"
+    echo
+    continue
+  fi
+
+  cd "$repo_dir" || {
+    printf "### %s\n" "$r"
+    echo "- Error: Could not change to directory: $repo_dir"
+    echo
+    continue
+  }
+
+  # Get all local branches
+  all_branches=$(git branch --format='%(refname:short)' 2>/dev/null | sort || echo "")
+  current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+  # Get stash list (without --date=iso to get numeric indices, we'll get dates separately)
+  stashes=$(git stash list 2>/dev/null || echo "")
+
+  # Output markdown
+  printf "### %s\n" "$r"
+
+  # Check each branch for uncommitted changes
+  branch_has_changes=false
+  initial_branch="$current_branch"
+  initial_status=$(git status --porcelain 2>/dev/null || echo "")
+
+  # If we have uncommitted changes, we need to handle them before switching branches
+  temp_stash=false
+  if [[ -n "$initial_status" ]]; then
+    # Try to stash changes temporarily (only untracked files can't be stashed by default)
+    # Use --include-untracked to stash everything
+    if git stash push -q --include-untracked -m "temp-check-$(date +%s)" >/dev/null 2>&1; then
+      temp_stash=true
+    fi
+  fi
+
+  for branch in $all_branches; do
+    # Skip if branch name is empty
+    [[ -z "$branch" ]] && continue
+
+    # Checkout branch to check its status
+    if ! git checkout "$branch" >/dev/null 2>&1; then
+      continue
+    fi
+
+    # Check for uncommitted changes
+    uncommitted_status=$(git status --porcelain 2>/dev/null || echo "")
+
+    if [[ -z "$uncommitted_status" ]]; then
+      continue
+    fi
+
+    branch_has_changes=true
+
+    # Count changes by type
+    modified=$(echo "$uncommitted_status" | grep -c '^ M' 2>/dev/null || true)
+    added=$(echo "$uncommitted_status" | grep -c '^A ' 2>/dev/null || true)
+    deleted=$(echo "$uncommitted_status" | grep -c '^ D' 2>/dev/null || true)
+    untracked=$(echo "$uncommitted_status" | grep -c '^\?\?' 2>/dev/null || true)
+    staged=$(echo "$uncommitted_status" | grep -c '^[MAD]' 2>/dev/null || true)
+
+    # Ensure we have numbers, default to 0 if empty
+    modified=${modified:-0}
+    added=${added:-0}
+    deleted=${deleted:-0}
+    untracked=${untracked:-0}
+    staged=${staged:-0}
+
+    # Skip if no changes
+    if [[ "$modified" == "0" && "$added" == "0" && "$deleted" == "0" && "$untracked" == "0" && "$staged" == "0" ]]; then
+      continue
+    fi
+
+    echo "- **Branch:** $branch"
+    echo "  - **Uncommitted changes:**"
+
+    change_parts=()
+    [[ "$modified" != "0" ]] && change_parts+=("$modified modified")
+    [[ "$added" != "0" ]] && change_parts+=("$added added")
+    [[ "$deleted" != "0" ]] && change_parts+=("$deleted deleted")
+    [[ "$untracked" != "0" ]] && change_parts+=("$untracked untracked")
+    [[ "$staged" != "0" ]] && change_parts+=("$staged staged")
+
+    if [[ ${#change_parts[@]} -gt 0 ]]; then
+      echo "    - $(printf '%s, ' "${change_parts[@]}" | sed 's/, $//')"
+    fi
+
+    # Show file list (limited to first 10) - but exclude untracked files (only show count, not list)
+    file_list=$(echo "$uncommitted_status" | grep -v '^\?\?' | head -10 | while IFS= read -r line; do
+      status=$(echo "$line" | cut -c1-2)
+      file=$(echo "$line" | cut -c4-)
+      case "$status" in
+        " M") echo "      - Modified: $file" ;;
+        "M ") echo "      - Modified (staged): $file" ;;
+        "A ") echo "      - Added: $file" ;;
+        " D") echo "      - Deleted: $file" ;;
+        "D ") echo "      - Deleted (staged): $file" ;;
+        *) echo "      - $file" ;;
+      esac
+    done)
+
+    if [[ -n "$file_list" ]]; then
+      echo "$file_list"
+      tracked_changes=$(echo "$uncommitted_status" | grep -v '^\?\?' | wc -l | tr -d ' ')
+      if [[ "$tracked_changes" -gt 10 ]]; then
+        remaining=$((tracked_changes - 10))
+        echo "      - ... and $remaining more file(s)"
+      fi
+    fi
+    echo
+  done
+
+  # Restore original branch (suppress errors to continue processing)
+  git checkout "$initial_branch" >/dev/null 2>&1 || true
+
+  # Restore stashed changes if we stashed them (suppress errors)
+  if [[ "$temp_stash" == "true" ]]; then
+    git stash pop -q >/dev/null 2>&1 || true
+    # Clean up any temp stashes that might have been left behind
+    git stash list | grep -q "temp-check-" && git stash drop -q stash@{0} >/dev/null 2>&1 || true
+  fi
+
+  # Return to base directory before processing next repo
+  cd "$REPO_BASE_DIR" || true
+
+  if [[ "$branch_has_changes" == "false" ]]; then
+    echo "- **Uncommitted changes:** None (checked all branches)"
+  fi
+
+  # Check for stashes
+  if [[ -n "$stashes" ]]; then
+    echo "- **Stashes:**"
+    stash_count=$(echo "$stashes" | wc -l | tr -d ' ')
+    echo "  - Total: $stash_count stash(es)"
+
+    # Parse and display stashes with dates
+    echo "$stashes" | head -5 | while IFS= read -r stash_line; do
+      [[ -z "$stash_line" ]] && continue
+
+      # Extract stash index (numeric: stash@{0})
+      stash_index=$(echo "$stash_line" | sed -n 's/stash@{\([0-9]*\)}.*/\1/p' | head -1)
+      [[ -z "$stash_index" ]] && continue
+
+      # Try to extract branch name (format: "WIP on branch:" or "On branch:")
+      stash_branch=$(echo "$stash_line" | sed -n -e 's/.*WIP on \([^:]*\):.*/\1/p' -e 's/.*On \([^:]*\):.*/\1/p' | head -1)
+      [[ -z "$stash_branch" ]] && stash_branch="$current_branch"
+
+      # Extract date from git log using the stash index
+      stash_date=""
+      if [[ -n "$stash_index" ]]; then
+        stash_date=$(cd "$repo_dir" && git log -1 --format="%ai" "stash@{$stash_index}" 2>/dev/null || echo "")
+      fi
+
+      # Extract message (everything after the last colon, or "WIP")
+      stash_message=$(echo "$stash_line" | sed -n 's/.*: \(.*\)/\1/p')
+      [[ -z "$stash_message" ]] && stash_message="WIP"
+
+      # Format date to be more readable (YYYY-MM-DD HH:MM)
+      if [[ -n "$stash_date" ]]; then
+        formatted_date=$(echo "$stash_date" | awk '{print $1, substr($2,1,5)}' 2>/dev/null || echo "$stash_date")
+      else
+        formatted_date="unknown date"
+      fi
+
+      # Check if stash is obsolete (changes already in the branch)
+      is_obsolete=false
+      obsolete_reason=""
+
+      # Check if the stash branch exists
+      if git show-ref --verify --quiet "refs/heads/$stash_branch" 2>/dev/null || git show-ref --verify --quiet "refs/remotes/origin/$stash_branch" 2>/dev/null; then
+        # Save current branch
+        saved_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+
+        # Try to checkout the stash branch to check
+        if git checkout "$stash_branch" >/dev/null 2>&1; then
+          # Get the stash's base commit (the commit it was created from)
+          # stash@{n}^3 is the base commit
+          stash_base=$(git rev-parse "stash@{$stash_index}^3" 2>/dev/null || echo "")
+
+          if [[ -n "$stash_base" ]]; then
+            # Get current HEAD of the branch
+            branch_head=$(git rev-parse HEAD 2>/dev/null || echo "")
+
+            # Check if stash base is an ancestor of current HEAD
+            if git merge-base --is-ancestor "$stash_base" "$branch_head" 2>/dev/null; then
+              # Get what the stash would change (diff from base to stash)
+              stash_changes=$(git diff "$stash_base" "stash@{$stash_index}^1" 2>/dev/null || echo "")
+
+              # Get what HEAD has changed since the stash base
+              head_changes=$(git diff "$stash_base" "$branch_head" 2>/dev/null || echo "")
+
+              # If stash changes are non-empty, check if they're already in HEAD
+              if [[ -n "$stash_changes" ]]; then
+                # Try to apply stash changes on top of HEAD and see if it results in no changes
+                # This is done by checking if the stash's final state matches HEAD's state for those files
+
+                # Get list of files changed by stash
+                stash_files=$(git diff --name-only "$stash_base" "stash@{$stash_index}^1" 2>/dev/null || echo "")
+
+                if [[ -n "$stash_files" ]]; then
+                  # Check if all stash file changes are already in HEAD
+                  all_in_head=true
+                  while IFS= read -r file; do
+                    [[ -z "$file" ]] && continue
+
+                    # Check if file exists in stash
+                    stash_file_exists=$(git cat-file -e "stash@{$stash_index}^1:$file" 2>/dev/null && echo "yes" || echo "no")
+                    # Check if file exists in HEAD
+                    head_file_exists=$(git cat-file -e "$branch_head:$file" 2>/dev/null && echo "yes" || echo "no")
+
+                    # If stash adds a file (file doesn't exist in base but exists in stash)
+                    base_file_exists=$(git cat-file -e "$stash_base:$file" 2>/dev/null && echo "yes" || echo "no")
+
+                    if [[ "$stash_file_exists" == "yes" && "$base_file_exists" == "no" ]]; then
+                      # Stash adds a new file - check if HEAD also has it with same content
+                      if [[ "$head_file_exists" != "yes" ]]; then
+                        all_in_head=false
+                        break
+                      fi
+                      stash_content=$(git show "stash@{$stash_index}^1:$file" 2>/dev/null)
+                      head_content=$(git show "$branch_head:$file" 2>/dev/null)
+                      if [[ "$stash_content" != "$head_content" ]]; then
+                        all_in_head=false
+                        break
+                      fi
+                    elif [[ "$stash_file_exists" == "no" && "$base_file_exists" == "yes" ]]; then
+                      # Stash deletes a file - check if HEAD also deletes it
+                      if [[ "$head_file_exists" == "yes" ]]; then
+                        all_in_head=false
+                        break
+                      fi
+                    elif [[ "$stash_file_exists" == "yes" && "$base_file_exists" == "yes" ]]; then
+                      # Stash modifies a file - check if HEAD has the same content
+                      if [[ "$head_file_exists" != "yes" ]]; then
+                        all_in_head=false
+                        break
+                      fi
+                      stash_content=$(git show "stash@{$stash_index}^1:$file" 2>/dev/null)
+                      head_content=$(git show "$branch_head:$file" 2>/dev/null)
+                      if [[ "$stash_content" != "$head_content" ]]; then
+                        all_in_head=false
+                        break
+                      fi
+                    fi
+                  done <<< "$stash_files"
+
+                  if [[ "$all_in_head" == "true" ]]; then
+                    is_obsolete=true
+                    obsolete_reason="(changes already in branch)"
+                  fi
+                fi
+              fi
+            fi
+          fi
+
+          # Restore original branch
+          git checkout "$saved_branch" >/dev/null 2>&1 || true
+        fi
+      fi
+
+      # Output stash info with obsolete marker if applicable
+      if [[ "$is_obsolete" == "true" ]]; then
+        echo "    - stash@{$stash_index}: [$stash_branch] $stash_message — $formatted_date ⚠️ **OBSOLETE** $obsolete_reason"
+      else
+        echo "    - stash@{$stash_index}: [$stash_branch] $stash_message — $formatted_date"
+      fi
+    done
+
+    if [[ "$stash_count" -gt 5 ]]; then
+      remaining=$((stash_count - 5))
+      echo "    - ... and $remaining more stash(es)"
+    fi
+  else
+    echo "- **Stashes:** None"
+  fi
+
+  echo
+done
+} | tee "$OUTPUT_FILE"
+
+

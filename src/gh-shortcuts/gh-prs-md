@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 REPOS="${GH_REPOS:?set GH_REPOS}"
-PREF_ENV="GITHUB_TOKEN=${GH_GEI_TOKEN:-${GITHUB_TOKEN:-}} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
+PREF_ENV="GH_GEI_TOKEN=${GH_GEI_TOKEN:-} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
 for r in $REPOS; do
   if [[ "$r" == */* ]]; then repo="$r"; else repo="FogPharma/$r"; fi
   printf "### %s\n" "$repo"

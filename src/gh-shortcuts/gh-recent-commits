@@ -10,7 +10,7 @@ COMMIT_AUTHOR=${COMMIT_AUTHOR:-"dvaron|Dave Varon|varontron"}
 
 # Get repositories from GH_REPOS environment variable
 REPOS="${GH_REPOS:?set GH_REPOS}"
-PREF_ENV="GITHUB_TOKEN=${GH_GEI_TOKEN:-${GITHUB_TOKEN:-}} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
+PREF_ENV="GH_GEI_TOKEN=${GH_GEI_TOKEN:-} GH_TOKEN=${GH_GEI_TOKEN:-${GH_TOKEN:-}}"
 
 # Get date 7 days ago
 SINCE_DATE=$(date -v-7d '+%Y-%m-%d' 2>/dev/null || date -d '7 days ago' '+%Y-%m-%d' 2>/dev/null)

@@ -1,0 +1,29 @@
+# GitHub Enterprise SOP Compliance Configuration
+# Copy this file to config.yaml and customize
+
+# GitHub organization name
+github_org: "FogPharma"
+
+# Notion configuration
+notion:
+  scorecard_db_id: "2b013d47-6800-817b-9ff0-d5298edf6bbb"  # Notion database ID for Repos Scorecard
+  actions_db_id: "2b013d47-6800-8158-848f-c91dcb8350f6"    # Notion database ID for Actions/Exceptions
+  release_views_db_id: "2b013d47-6800-81c2-93f1-d777a102f6bc"  # Notion database ID for Release Views
+
+# Exceptions - repos that deviate from standard policies
+exceptions:
+  default_branch:
+    # Example: rcode uses 'master' instead of 'main'
+    # "FogPharma/rcode": "master"
+
+  # Repos that are allowed to have release branches (e.g., IaC repos)
+  allow_release_branches:
+    # - "FogPharma/IaC-DataScience"
+
+# Contributor analysis windows (days)
+contributor_window_days: 365
+primary_contributor_window_days: 90
+
+# Stale branch threshold (days)
+stale_branch_threshold_days: 90
+
