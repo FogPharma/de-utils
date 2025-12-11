@@ -1,0 +1,62 @@
+name: Compliance Audit
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Single repository to audit (optional, leave empty for all)'
+        required: false
+        type: string
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r src/compliance/requirements.txt
+
+      - name: Run compliance audit
+        env:
+          # Option A: GitHub App (recommended for higher rate limits)
+          # Provides 15,000 requests/hour vs 5,000 for PAT
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+
+          # Option B: Personal Access Token (fallback)
+          # GH_GEI_TOKEN: ${{ secrets.GH_GEI_TOKEN }}
+
+          # Notion configuration
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
+        run: |
+          python -m src.compliance.audit \
+            --output audit-results.json \
+            --notion-db ${{ secrets.NOTION_SCORECARD_DB_ID }} \
+            ${{ github.event.inputs.repo && format('--repo {0}', github.event.inputs.repo) || '' }}
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-audit-results
+          path: audit-results.json
+          retention-days: 30
+

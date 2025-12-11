@@ -59,7 +59,7 @@ Add the alias to your GitHub CLI configuration:
 
 ```bash
 # Option 1: Use gh CLI to add the alias
-gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
+gh alias set recent-commits '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
 
 # Option 2: Manually edit ~/.config/gh/config.yml
 ```
@@ -68,7 +68,7 @@ If editing manually, add this to your `~/.config/gh/config.yml`:
 
 ```yaml
 aliases:
-  recent-commits: '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
+  recent-commits: '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
 ```
 
 ## Configuration
@@ -113,7 +113,7 @@ export COMMIT_AUTHOR="john_doe|John Doe|john@company.com"
 The script uses GitHub tokens in this order of preference:
 
 1. `GH_GEI_TOKEN` (GitHub Enterprise token)
-2. `GITHUB_TOKEN` (standard GitHub token)
+2. `GH_TOKEN` (standard GitHub token)
 3. GitHub CLI's built-in authentication
 
 Most users won't need to set these explicitly if GitHub CLI is properly authenticated.

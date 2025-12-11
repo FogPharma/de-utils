@@ -53,10 +53,10 @@ source ~/.bashrc  # or source ~/.zshrc
 
 ```bash
 # Basic alias (output to terminal only)
-gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
+gh alias set recent-commits '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits'
 
 # Or alias with file output (recommended)
-gh alias set recent-commits '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits | tee ~/Documents/my-recent-work.md'
+gh alias set recent-commits '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-recent-commits | tee ~/Documents/my-recent-work.md'
 ```
 
 **Alternative: Create a bash/zsh alias for more control:**

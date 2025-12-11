@@ -1,0 +1,9 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GitHub Enterprise SOP Compliance Questions
+    url: [LINK_TO_COMPLIANCE_PAGE]
+    about: Questions about compliance standards and workflows
+  - name: Security Vulnerability
+    url: [LINK_TO_SECURITY_POLICY]
+    about: Report security vulnerabilities (do not create public issues)
+

@@ -56,7 +56,7 @@ Add the alias to your GitHub CLI configuration:
 
 ```bash
 # Option 1: Use gh CLI to add the alias
-gh alias set prs-md '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
+gh alias set prs-md '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
 
 # Option 2: Manually edit ~/.config/gh/config.yml
 ```
@@ -65,7 +65,7 @@ If editing manually, add this to your `~/.config/gh/config.yml`:
 
 ```yaml
 aliases:
-  prs-md: '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
+  prs-md: '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
 ```
 
 ## Configuration
@@ -91,8 +91,8 @@ export GH_REPOS="fog4j ML_models_production IaC-DataScience"
 
 The script uses GitHub tokens in this order of preference:
 
-1. `GH_GEI_TOKEN` (GitHub Enterprise token, if you're using GitHub Enterprise)
-2. `GITHUB_TOKEN` (standard GitHub token)
+1. `GH_GEI_TOKEN` (GitHub Enterprise token)
+2. `GH_TOKEN` (standard GitHub token)
 3. GitHub CLI's built-in authentication
 
 Most users won't need to set these explicitly if GitHub CLI is properly authenticated.
@@ -166,8 +166,8 @@ gh pr list --repo your-org/your-repo
 
 # Check if environment variables are set
 echo "GH_REPOS: $GH_REPOS"
-echo "GITHUB_TOKEN: ${GITHUB_TOKEN:+SET}"
 echo "GH_GEI_TOKEN: ${GH_GEI_TOKEN:+SET}"
+echo "GH_TOKEN: ${GH_TOKEN:+SET}"
 ```
 
 ## Customization

@@ -53,10 +53,10 @@ source ~/.bashrc  # or source ~/.zshrc
 
 ```bash
 # Basic alias (output to terminal only)
-gh alias set prs-md '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
+gh alias set prs-md '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md'
 
 # Or alias with file output (recommended)
-gh alias set prs-md '!GITHUB_TOKEN="${GH_GEI_TOKEN:-$GITHUB_TOKEN}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md | tee ~/Documents/team-prs.md'
+gh alias set prs-md '!GH_GEI_TOKEN="${GH_GEI_TOKEN:-}" GH_TOKEN="${GH_GEI_TOKEN:-$GH_TOKEN}" ~/.local/bin/gh-prs-md | tee ~/Documents/team-prs.md'
 ```
 
 **Alternative: Create a bash/zsh alias for more control:**
